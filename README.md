@@ -14,8 +14,6 @@ Matrix Multiplication - Manipulate image colours similar to Photo Filters for Im
 - **Tone Controls**: Exposure, contrast, saturation via matrix operations
 - **Grayscale Projection**: Orthogonal projection onto luminance vector
 - **Vibrance Boost**: Selective saturation amplification
-
-## Advanced LA Features
 - **Least Squares Color Correction**: Solves `min_X ||AX - B||²_F` for optimal color mapping
 - **PCA Compression**: Eigendecomposition + reconstruction at reduced rank (k=1,2,3)
 - **Covariance Analysis**: Full color covariance matrix from pixel distribution
@@ -62,4 +60,3 @@ The server will start on `http://127.0.0.1:8000` with hot-reload enabled. Upload
 - `frontend/index.html`: UI layout (images left, controls right)
 - `frontend/styles.css`: Professional dark theme with modern gradients
 - `frontend/app.js`: Live controls, KaTeX formula rendering, smart tooltips
-- `draft.md`: Project report
