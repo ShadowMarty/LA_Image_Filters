@@ -24,6 +24,16 @@ def _clip01(values: np.ndarray) -> np.ndarray:
     return np.clip(values, 0.0, 1.0)
 
 
+def _as_unit(image: np.ndarray, normalized: bool) -> np.ndarray:
+    if normalized:
+        return _clip01(image.astype(np.float32, copy=False))
+    return _clip01(image.astype(np.float32, copy=False) / 255.0)
+
+
+def _restore_range(values: np.ndarray, normalized: bool) -> np.ndarray:
+    return values if normalized else values * 255.0
+
+
 def available_filters() -> List[str]:
     return list(FILTERS.keys())
 
@@ -51,44 +61,58 @@ def apply_tone_controls(
     temperature: float,
     tint: float,
     gamma: float,
+    normalized: bool = False,
 ) -> np.ndarray:
-    x = _clip01(image / 255.0)
+    if (
+        abs(float(exposure)) <= 1e-7
+        and abs(float(contrast)) <= 1e-7
+        and abs(float(saturation)) <= 1e-7
+        and abs(float(temperature)) <= 1e-7
+        and abs(float(tint)) <= 1e-7
+        and abs(float(gamma) - 1.0) <= 1e-7
+    ):
+        return image
+
+    x = _as_unit(image, normalized)
     x = _clip01(x * (2.0 ** float(exposure)))
     x = _clip01((x - 0.5) * (1.0 + float(contrast)) + 0.5)
 
     lum = np.tensordot(x, LUMINANCE_VECTOR, axes=([2], [0]))
-    gray = np.repeat(lum[:, :, None], 3, axis=2)
+    gray = lum[:, :, None]
     x = _clip01(gray + (x - gray) * (1.0 + float(saturation)))
 
     x[:, :, 0] = _clip01(x[:, :, 0] + float(temperature) * 0.08)
     x[:, :, 2] = _clip01(x[:, :, 2] - float(temperature) * 0.08)
     x[:, :, 1] = _clip01(x[:, :, 1] + float(tint) * 0.06)
     x = _clip01(np.power(x, 1.0 / max(float(gamma), 0.01)))
-    return x * 255.0
+    return _restore_range(x, normalized)
 
 
-def apply_vibrance(image: np.ndarray, amount: float) -> np.ndarray:
-    x = _clip01(image / 255.0)
+def apply_vibrance(image: np.ndarray, amount: float, normalized: bool = False) -> np.ndarray:
+    if abs(float(amount)) <= 1e-7:
+        return image
+
+    x = _as_unit(image, normalized)
     sat = np.max(x, axis=2) - np.min(x, axis=2)
     boost = float(np.clip(amount, -1.0, 1.0)) * (1.0 - sat)
 
     lum = np.tensordot(x, LUMINANCE_VECTOR, axes=([2], [0]))
-    gray = np.repeat(lum[:, :, None], 3, axis=2)
-    return _clip01(x + (x - gray) * boost[:, :, None]) * 255.0
+    gray = lum[:, :, None]
+    return _restore_range(_clip01(x + (x - gray) * boost[:, :, None]), normalized)
 
 
-def apply_unsharp(image: np.ndarray, amount: float) -> np.ndarray:
+def apply_unsharp(image: np.ndarray, amount: float, normalized: bool = False) -> np.ndarray:
     a = float(np.clip(amount, 0.0, 2.0))
     if a <= 1e-6:
         return image
 
-    x = _clip01(image / 255.0)
+    x = _as_unit(image, normalized)
     p = np.pad(x, ((1, 1), (1, 1), (0, 0)), mode="edge")
     blur = (p[:-2, :-2] + p[:-2, 1:-1] + p[:-2, 2:] + p[1:-1, :-2] + p[1:-1, 1:-1] + p[1:-1, 2:] + p[2:, :-2] + p[2:, 1:-1] + p[2:, 2:]) / 9.0
-    return _clip01(x + a * (x - blur)) * 255.0
+    return _restore_range(_clip01(x + a * (x - blur)), normalized)
 
 
-def apply_vignette(image: np.ndarray, strength: float) -> np.ndarray:
+def apply_vignette(image: np.ndarray, strength: float, normalized: bool = False) -> np.ndarray:
     s = float(np.clip(strength, 0.0, 1.0))
     if s <= 1e-6:
         return image
@@ -99,4 +123,5 @@ def apply_vignette(image: np.ndarray, strength: float) -> np.ndarray:
     yy = (yy - (h - 1) / 2.0) / max(h, 1)
     radius = np.sqrt(xx * xx + yy * yy)
     mask = np.clip(1.0 - s * np.power(radius * 1.9, 1.4), 0.25, 1.0)
-    return _clip01((image / 255.0) * mask[:, :, None]) * 255.0
+    x = _as_unit(image, normalized)
+    return _restore_range(_clip01(x * mask[:, :, None]), normalized)

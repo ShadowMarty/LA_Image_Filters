@@ -9,7 +9,7 @@ from .filter_matrices import LUMINANCE_VECTOR
 
 def image_to_pixels(image: np.ndarray) -> np.ndarray:
     """Flatten HxWx3 image into Nx3 pixel matrix."""
-    return image.reshape(-1, 3).astype(np.float64)
+    return image.reshape(-1, 3).astype(np.float32, copy=False)
 
 
 def pixels_to_image(pixels: np.ndarray, shape: Tuple[int, int, int]) -> np.ndarray:

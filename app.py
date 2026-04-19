@@ -1,10 +1,12 @@
 """Single application entrypoint and API host for the LA image studio."""
 
+import base64
 from pathlib import Path
+from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from src.filter_matrices import available_filters
@@ -13,6 +15,51 @@ from src.image_pipeline import run_pipeline
 app = FastAPI(title="LA Image Filter Studio", version="1.1.0")
 frontend_dir = Path(__file__).parent / "frontend"
 app.mount("/frontend", StaticFiles(directory=str(frontend_dir)), name="frontend")
+
+
+def _build_settings(
+    preset: str,
+    strength: float,
+    hue: float,
+    exposure: float,
+    contrast: float,
+    saturation: float,
+    vibrance: float,
+    temperature: float,
+    tint: float,
+    gamma: float,
+    sharpen: float,
+    vignette: float,
+    grayscale: bool,
+    least_squares: bool,
+    pca_k: int,
+    preview_max: int,
+) -> dict:
+    return {
+        "preset": preset,
+        "strength": strength,
+        "hue": hue,
+        "exposure": exposure,
+        "contrast": contrast,
+        "saturation": saturation,
+        "vibrance": vibrance,
+        "temperature": temperature,
+        "tint": tint,
+        "gamma": gamma,
+        "sharpen": sharpen,
+        "vignette": vignette,
+        "grayscale": grayscale,
+        "least_squares": least_squares,
+        "pca_k": pca_k,
+        "preview_max": preview_max,
+    }
+
+
+def _safe_download_name(filename: Optional[str]) -> str:
+    stem = Path(filename).stem if filename else "filtered_output"
+    safe = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in stem)
+    safe = safe.strip("_") or "filtered_output"
+    return f"{safe}_filtered.png"
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -52,31 +99,87 @@ async def apply_filters(
     if not image_bytes:
         return JSONResponse({"error": "No image file received."}, status_code=400)
 
-    settings = {
-        "preset": preset,
-        "strength": strength,
-        "hue": hue,
-        "exposure": exposure,
-        "contrast": contrast,
-        "saturation": saturation,
-        "vibrance": vibrance,
-        "temperature": temperature,
-        "tint": tint,
-        "gamma": gamma,
-        "sharpen": sharpen,
-        "vignette": vignette,
-        "grayscale": grayscale,
-        "least_squares": least_squares,
-        "pca_k": pca_k,
-        "preview_max": preview_max,
-    }
+    settings = _build_settings(
+        preset=preset,
+        strength=strength,
+        hue=hue,
+        exposure=exposure,
+        contrast=contrast,
+        saturation=saturation,
+        vibrance=vibrance,
+        temperature=temperature,
+        tint=tint,
+        gamma=gamma,
+        sharpen=sharpen,
+        vignette=vignette,
+        grayscale=grayscale,
+        least_squares=least_squares,
+        pca_k=pca_k,
+        preview_max=preview_max,
+    )
 
     try:
-        return JSONResponse(run_pipeline(image_bytes, settings))
+        return JSONResponse(run_pipeline(image_bytes, settings, preview_format="JPEG", preview_quality=88))
     except ValueError as exc:
         return JSONResponse({"error": str(exc)}, status_code=400)
     except Exception:
         return JSONResponse({"error": "Processing failed. Try a smaller image."}, status_code=500)
+
+
+@app.post("/api/export")
+async def export_filtered(
+    file: UploadFile = File(...),
+    preset: str = Form("Cinematic"),
+    strength: float = Form(1.0),
+    hue: float = Form(0.0),
+    exposure: float = Form(0.0),
+    contrast: float = Form(0.0),
+    saturation: float = Form(0.0),
+    vibrance: float = Form(0.0),
+    temperature: float = Form(0.0),
+    tint: float = Form(0.0),
+    gamma: float = Form(1.0),
+    sharpen: float = Form(0.0),
+    vignette: float = Form(0.0),
+    grayscale: bool = Form(False),
+    least_squares: bool = Form(False),
+    pca_k: int = Form(3),
+    preview_max: int = Form(1280),
+) -> Response:
+    image_bytes = await file.read()
+    if not image_bytes:
+        return JSONResponse({"error": "No image file received."}, status_code=400)
+
+    settings = _build_settings(
+        preset=preset,
+        strength=strength,
+        hue=hue,
+        exposure=exposure,
+        contrast=contrast,
+        saturation=saturation,
+        vibrance=vibrance,
+        temperature=temperature,
+        tint=tint,
+        gamma=gamma,
+        sharpen=sharpen,
+        vignette=vignette,
+        grayscale=grayscale,
+        least_squares=least_squares,
+        pca_k=pca_k,
+        preview_max=preview_max,
+    )
+
+    try:
+        result = run_pipeline(image_bytes, settings, keep_resolution=True)
+        _, encoded = result["image"].split(",", 1)
+        png_bytes = base64.b64decode(encoded)
+        filename = _safe_download_name(file.filename)
+        headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+        return Response(content=png_bytes, media_type="image/png", headers=headers)
+    except ValueError as exc:
+        return JSONResponse({"error": str(exc)}, status_code=400)
+    except Exception:
+        return JSONResponse({"error": "Export failed. Try a smaller image."}, status_code=500)
 
 
 if __name__ == "__main__":

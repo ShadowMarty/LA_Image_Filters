@@ -35,6 +35,8 @@ const toggleCaptionsBtn = document.getElementById("toggleCaptionsBtn");
 let activeFile = null;
 let requestId = 0;
 let captionsEnabled = true;
+let originalPreviewUrl = null;
+let activeApplyController = null;
 
 const defaults = {
   preset: "Cinematic",
@@ -326,19 +328,67 @@ function collectFormData() {
   return fd;
 }
 
+function readImageDimensions(file) {
+  return new Promise((resolve, reject) => {
+    const probeUrl = URL.createObjectURL(file);
+    const probe = new Image();
+    probe.onload = () => {
+      const width = probe.naturalWidth || probe.width;
+      const height = probe.naturalHeight || probe.height;
+      URL.revokeObjectURL(probeUrl);
+      resolve({ width, height });
+    };
+    probe.onerror = () => {
+      URL.revokeObjectURL(probeUrl);
+      reject(new Error("Could not read uploaded image dimensions."));
+    };
+    probe.src = probeUrl;
+  });
+}
+
+function setPreviewSliderForImage(width, height) {
+  const imageMax = Math.max(Number(width) || 0, Number(height) || 0);
+  const sliderMin = Number(controls.preview_max.min) || 600;
+  const sliderMax = Math.max(imageMax, sliderMin);
+  controls.preview_max.step = "1";
+  controls.preview_max.max = String(sliderMax);
+  controls.preview_max.value = String(sliderMax);
+}
+
+function parseFilenameFromDisposition(dispositionHeader) {
+  if (!dispositionHeader) return "filtered_output.png";
+  const utf8Match = dispositionHeader.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match && utf8Match[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch {
+      return utf8Match[1];
+    }
+  }
+
+  const basicMatch = dispositionHeader.match(/filename="?([^";]+)"?/i);
+  return (basicMatch && basicMatch[1]) || "filtered_output.png";
+}
+
 async function applyFilters() {
   if (!activeFile) return;
   const current = ++requestId;
+
+  if (activeApplyController) {
+    activeApplyController.abort();
+  }
+  const controller = new AbortController();
+  activeApplyController = controller;
+
   setStatus("Applying filters...", "loading");
 
   try {
-    const response = await fetch("/api/apply", { method: "POST", body: collectFormData() });
+    const response = await fetch("/api/apply", { method: "POST", body: collectFormData(), signal: controller.signal });
     const payload = await response.json();
     if (current !== requestId) return;
     if (!response.ok) throw new Error(payload.error || "Failed to process image.");
 
     filteredPreview.src = payload.image;
-    downloadBtn.href = payload.image;
     downloadBtn.classList.remove("disabled");
 
     const m = payload.metrics;
@@ -364,7 +414,53 @@ async function applyFilters() {
     updateMathTiles(m);
     setStatus(`Preview updated (${payload.width} x ${payload.height}).`, "ok");
   } catch (err) {
+    if (err && err.name === "AbortError") return;
     setStatus(err.message || "Something went wrong.", "error");
+  } finally {
+    if (activeApplyController === controller) {
+      activeApplyController = null;
+    }
+  }
+}
+
+async function downloadFullResolution(event) {
+  event.preventDefault();
+  if (downloadBtn.classList.contains("disabled") || !activeFile) return;
+
+  downloadBtn.classList.add("disabled");
+  setStatus("Preparing full-resolution download...", "loading");
+
+  try {
+    const response = await fetch("/api/export", { method: "POST", body: collectFormData() });
+    if (!response.ok) {
+      let message = "Failed to export full-resolution image.";
+      try {
+        const payload = await response.json();
+        message = payload.error || message;
+      } catch {
+        // Ignore JSON parse errors and use default message.
+      }
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const filename = parseFilenameFromDisposition(response.headers.get("Content-Disposition"));
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+
+    setStatus("Downloaded full-resolution PNG.", "ok");
+  } catch (err) {
+    setStatus(err.message || "Something went wrong.", "error");
+  } finally {
+    if (filteredPreview.src) {
+      downloadBtn.classList.remove("disabled");
+    }
   }
 }
 
@@ -392,13 +488,28 @@ function resetControls() {
   applyDebounced();
 }
 
-fileInput.addEventListener("change", () => {
+fileInput.addEventListener("change", async () => {
   const file = fileInput.files && fileInput.files[0];
   if (!file) return;
   activeFile = file;
-  originalPreview.src = URL.createObjectURL(file);
-  updateOutputs();
-  applyFilters();
+
+  try {
+    const { width, height } = await readImageDimensions(file);
+    if (file !== activeFile) return;
+
+    if (originalPreviewUrl) {
+      URL.revokeObjectURL(originalPreviewUrl);
+    }
+    originalPreviewUrl = URL.createObjectURL(file);
+    originalPreview.src = originalPreviewUrl;
+
+    setPreviewSliderForImage(width, height);
+    updateOutputs();
+    setStatus(`Loaded ${width} x ${height}. Preview max set to ${Math.max(width, height)}.`, "ok");
+    applyFilters();
+  } catch (err) {
+    setStatus(err.message || "Failed to load image.", "error");
+  }
 });
 
 Object.values(controls).forEach((ctrl) => {
@@ -410,9 +521,7 @@ Object.values(controls).forEach((ctrl) => {
 });
 
 resetBtn.addEventListener("click", resetControls);
-downloadBtn.addEventListener("click", (event) => {
-  if (downloadBtn.classList.contains("disabled")) event.preventDefault();
-});
+downloadBtn.addEventListener("click", downloadFullResolution);
 viewButtons.split.addEventListener("click", () => setViewMode("split"));
 viewButtons.original.addEventListener("click", () => setViewMode("original"));
 viewButtons.edited.addEventListener("click", () => setViewMode("edited"));

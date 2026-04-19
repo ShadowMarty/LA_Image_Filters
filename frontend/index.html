@@ -130,7 +130,7 @@
       <div class="group"><label data-tip="Unsharp mask adds edge detail from a local blur estimate. $x'=\operatorname{clip}(x+\alpha(x-x_{\text{blur}}))$.">Sharpen <output id="sharpenOut"></output></label><input id="sharpen" type="range" min="0" max="2" step="0.01" value="0" /></div>
       <div class="group"><label data-tip="Vignette multiplies by a radial mask. $m(r)=\operatorname{clip}(1-s(1.9r)^{1.4},0.25,1)$ and $x'=x\,m(r)$.">Vignette <output id="vignetteOut"></output></label><input id="vignette" type="range" min="0" max="1" step="0.01" value="0" /></div>
       <div class="group"><label data-tip="PCA keeps top $k$ eigenvectors of covariance and reconstructs colors in that reduced subspace.">PCA Components <output id="pca_kOut"></output></label><input id="pca_k" type="range" min="1" max="3" step="1" value="3" /></div>
-      <div class="group"><label data-tip="Preview image is downscaled to the selected max dimension before processing for lower latency.">Preview Size <output id="preview_maxOut"></output></label><input id="preview_max" type="range" min="600" max="1800" step="50" value="1280" /></div>
+      <div class="group"><label data-tip="Live preview uses this max dimension for faster updates. After upload, this slider max expands to your image resolution; exported download is always processed at original resolution.">Preview Size <output id="preview_maxOut"></output></label><input id="preview_max" type="range" min="600" max="8000" step="1" value="1280" /></div>
 
       <div class="checks">
         <label><input id="grayscale" type="checkbox" /> Grayscale Projection</label>

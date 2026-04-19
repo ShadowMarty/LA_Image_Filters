@@ -2,7 +2,7 @@
 
 import base64
 from io import BytesIO
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import numpy as np
 from PIL import Image, UnidentifiedImageError
@@ -26,43 +26,59 @@ from .la_core import (
 )
 
 
-def _load_image(image_bytes: bytes, preview_max: int) -> np.ndarray:
-    """Decode image and downscale for responsive live previews."""
+def _load_image(image_bytes: bytes, preview_max: Optional[int]) -> np.ndarray:
+    """Decode image and optionally downscale for responsive live previews."""
     try:
         image = Image.open(BytesIO(image_bytes)).convert("RGB")
     except UnidentifiedImageError as exc:
         raise ValueError("Unsupported image format. Use PNG or JPG.") from exc
 
-    max_size = max(int(preview_max), 300)
-    if max(image.size) > max_size:
-        image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+    if preview_max is not None:
+        max_size = max(int(preview_max), 300)
+        if max(image.size) > max_size:
+            image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
 
-    return np.array(image, dtype=np.float64)
+    return np.asarray(image, dtype=np.uint8)
 
 
-def _to_data_url(image: np.ndarray) -> str:
-    """Encode image array as PNG data URL for direct browser rendering."""
+def _to_data_url(image: np.ndarray, fmt: str = "PNG", quality: int = 92) -> str:
+    """Encode image array as image data URL for direct browser rendering."""
     buffer = BytesIO()
-    Image.fromarray(image.astype(np.uint8)).save(buffer, format="PNG")
+    format_name = (fmt or "PNG").upper()
+    image_obj = Image.fromarray(image.astype(np.uint8, copy=False))
+    if format_name == "JPEG":
+        image_obj.save(buffer, format="JPEG", quality=int(np.clip(quality, 40, 100)))
+        mime = "image/jpeg"
+    else:
+        image_obj.save(buffer, format="PNG")
+        mime = "image/png"
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
-    return f"data:image/png;base64,{encoded}"
+    return f"data:{mime};base64,{encoded}"
 
 
-def run_pipeline(image_bytes: bytes, settings: Dict[str, Any]) -> Dict[str, Any]:
+def run_pipeline(
+    image_bytes: bytes,
+    settings: Dict[str, Any],
+    keep_resolution: bool = False,
+    preview_format: str = "PNG",
+    preview_quality: int = 92,
+) -> Dict[str, Any]:
     """Apply all selected operations and return image + LA metrics payload."""
-    image = _load_image(image_bytes, settings.get("preview_max", 1280))
+    preview_max = None if keep_resolution else settings.get("preview_max", 1280)
+    image = _load_image(image_bytes, preview_max)
     shape = image.shape
     pixels = image_to_pixels(image)
 
     base_matrix = get_filter_matrix(settings.get("preset", "Identity"))
     hue_matrix = hue_rotation_matrix(settings.get("hue", 0.0))
     transform = blend_with_identity(hue_matrix @ base_matrix, settings.get("strength", 1.0))
+    pixel_transform = transform.astype(np.float32, copy=False)
 
-    transformed_pixels = apply_transform(pixels, transform)
+    transformed_pixels = apply_transform(pixels, pixel_transform)
     if settings.get("grayscale", False):
         transformed_pixels = project_grayscale(transformed_pixels)
 
-    working = pixels_to_image(transformed_pixels, shape).astype(np.float64)
+    working = np.clip(transformed_pixels.reshape(shape).astype(np.float32, copy=False) / 255.0, 0.0, 1.0)
     working = apply_tone_controls(
         working,
         exposure=settings.get("exposure", 0.0),
@@ -71,12 +87,13 @@ def run_pipeline(image_bytes: bytes, settings: Dict[str, Any]) -> Dict[str, Any]
         temperature=settings.get("temperature", 0.0),
         tint=settings.get("tint", 0.0),
         gamma=settings.get("gamma", 1.0),
+        normalized=True,
     )
-    working = apply_vibrance(working, settings.get("vibrance", 0.0))
-    working = apply_unsharp(working, settings.get("sharpen", 0.0))
-    working = apply_vignette(working, settings.get("vignette", 0.0))
+    working = apply_vibrance(working, settings.get("vibrance", 0.0), normalized=True)
+    working = apply_unsharp(working, settings.get("sharpen", 0.0), normalized=True)
+    working = apply_vignette(working, settings.get("vignette", 0.0), normalized=True)
 
-    processed_pixels = image_to_pixels(working)
+    processed_pixels = image_to_pixels(working * 255.0)
     ls_preview_pixels, ls_matrix = apply_least_squares_correction(processed_pixels)
     least_squares_applied = bool(settings.get("least_squares", False))
     if least_squares_applied:
@@ -87,14 +104,14 @@ def run_pipeline(image_bytes: bytes, settings: Dict[str, Any]) -> Dict[str, Any]
         processed_pixels = pca_compress(processed_pixels, pca_k)
 
     final_image = pixels_to_image(processed_pixels, shape)
-    final_pixels = image_to_pixels(final_image)
+    final_pixels = final_image.reshape(-1, 3)
 
-    props = matrix_properties(transform)
+    props = matrix_properties(transform.astype(np.float64, copy=False))
     eigenvalues, eigenvectors, explained, _, cov = covariance_eigen(final_pixels)
     stats = color_statistics(final_pixels)
 
     return {
-        "image": _to_data_url(final_image),
+        "image": _to_data_url(final_image, fmt=preview_format, quality=preview_quality),
         "width": int(final_image.shape[1]),
         "height": int(final_image.shape[0]),
         "metrics": {
