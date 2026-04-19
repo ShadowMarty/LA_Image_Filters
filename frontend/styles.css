@@ -215,6 +215,10 @@ a.disabled { opacity: 0.4; pointer-events: none; }
   padding: 10px 14px;
 }
 
+#projectGuideBtn {
+  background: linear-gradient(120deg, rgba(44, 197, 166, 0.28), rgba(44, 197, 166, 0.1)) !important;
+}
+
 .preview-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

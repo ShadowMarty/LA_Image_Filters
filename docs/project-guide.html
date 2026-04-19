@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LA Image Filter Studio - Project Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+    <style>
+        :root {
+            --bg-0: #0a1116;
+            --bg-1: #0f1a22;
+            --bg-2: #122634;
+            --text: #f5f7f9;
+            --muted: #b3c5d1;
+            --accent: #2cc5a6;
+            --accent-2: #f0a34a;
+            --border: rgba(162, 191, 207, 0.22);
+            --panel: rgba(10, 23, 32, 0.82);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-color: rgba(44, 197, 166, 0.5) rgba(15, 28, 38, 0.6);
+            scrollbar-width: thin;
+            overflow-x: hidden;
+            will-change: scroll-position;
+        }
+
+        *::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        *::-webkit-scrollbar-track {
+            background: rgba(10, 17, 25, 0.5);
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(44, 197, 166, 0.7), rgba(44, 197, 166, 0.4));
+            border-radius: 999px;
+            border: 2px solid rgba(10, 17, 25, 0.5);
+        }
+
+        *::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, rgba(44, 197, 166, 0.9), rgba(44, 197, 166, 0.6));
+        }
+
+        body {
+            font-family: "Manrope", sans-serif;
+            color: var(--text);
+            background: 
+                radial-gradient(ellipse 500px 150% at 0% 50%, rgba(29, 58, 76, 0.4) 0%, transparent 60%),
+                radial-gradient(ellipse 2500px 150% at 100% 50%, rgba(85, 59, 31, 0.4) 0%, transparent 60%),
+                radial-gradient(1200px 600px at 10% 0%, #1d3a4c 0%, transparent 55%),
+                radial-gradient(900px 500px at 90% 0%, #553b1f 0%, transparent 50%),
+                linear-gradient(180deg, var(--bg-0), var(--bg-1));
+            background-attachment: fixed;
+            min-height: 100vh;
+            line-height: 1.72;
+            overflow-x: hidden;
+        }
+
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-attachment: fixed;
+            mask-image: radial-gradient(circle at 50% 10%, black 30%, transparent 100%);
+            z-index: 0;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 10px;
+            right: 24px;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-family: "Manrope", sans-serif;
+            font-weight: 500;
+            z-index: 95;
+            backdrop-filter: blur(8px);
+        }
+
+        .back-button:hover {
+            background: rgba(44, 197, 166, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(44, 197, 166, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto 0 0;
+            padding: 40px 30px 40px 150px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 64px 40px 52px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(162, 191, 207, 0.2);
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(13, 21, 30, 0.78) 0%, rgba(10, 17, 24, 0.78) 100%);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.34);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -140px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 520px;
+            height: 360px;
+            background: radial-gradient(circle, rgba(44, 197, 166, 0.12) 0%, rgba(240, 163, 74, 0.06) 44%, transparent 76%);
+            pointer-events: none;
+            animation: none;
+            opacity: 0.72;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-20px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-eyebrow {
+            margin: 0 0 14px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: #c4d2dc;
+            opacity: 0.9;
+        }
+
+        .hero h1 {
+            font-family: "Manrope", sans-serif;
+            font-size: clamp(2.4rem, 4.2vw, 3.15rem);
+            letter-spacing: -0.02em;
+            margin: 0 0 14px;
+            font-weight: 800;
+            color: var(--text);
+            background: none;
+            -webkit-background-clip: initial;
+            -webkit-text-fill-color: initial;
+            background-clip: initial;
+            animation: slideInDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-wrap: balance;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero .hero-subtitle {
+            font-size: 1.02rem;
+            color: #c6d3dc;
+            margin: 0;
+            font-weight: 500;
+            max-width: 560px;
+            margin-inline: auto;
+            animation: slideInUp 0.8s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Navigation Panel */
+        .toc-wrapper {
+            position: fixed;
+            right: 30px;
+            top: 55%;
+            transform: translateY(-50%);
+            z-index: 99;
+            width: auto;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 0;
+            padding: 20px 0;
+            background: transparent;
+            backdrop-filter: none;
+            border: none;
+            box-shadow: none;
+        }
+
+        .toc-label {
+            display: none;
+        }
+
+        .toc-container {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            overflow-x: visible;
+            overflow-y: visible;
+            align-items: flex-start;
+            max-height: none;
+        }
+
+        .toc-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .toc-item {
+            padding: 8px 16px;
+            border-radius: 6px 0 0 6px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(44, 197, 166, 0.25);
+            border-right: none;
+            background: rgba(15, 28, 38, 0.75);
+            backdrop-filter: blur(6px);
+            text-decoration: none;
+            color: #9aacba;
+            font-weight: 500;
+            font-size: 0.72rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            white-space: nowrap;
+            flex-shrink: 0;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: -2px 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .toc-item::before {
+            content: none;
+        }
+
+        .toc-item::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 50%;
+            width: 0;
+            height: 0;
+            background: var(--accent);
+            transform: translateY(-50%);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .toc-item:hover {
+            background: rgba(44, 197, 166, 0.15);
+            color: var(--accent);
+            border-color: rgba(44, 197, 166, 0.5);
+            box-shadow: -4px 6px 16px rgba(44, 197, 166, 0.15);
+            transform: translateX(-2px);
+        }
+
+        .toc-item:hover::after {
+            width: 3px;
+            height: 100%;
+        }
+
+        .toc-item.active {
+            background: rgba(44, 197, 166, 0.18);
+            color: var(--accent);
+            border-color: rgba(44, 197, 166, 0.6);
+            box-shadow: -4px 8px 20px rgba(44, 197, 166, 0.2);
+        }
+
+        .toc-item.active::after {
+            width: 3px;
+            height: 100%;
+        }
+
+        /* Section Styling */
+        section {
+            margin-bottom: 100px;
+            scroll-margin-top: 0;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-header {
+            position: relative;
+            margin-bottom: 48px;
+            padding-bottom: 24px;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            animation: expandWidth 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes expandWidth {
+            from { width: 0; }
+            to { width: 120px; }
+        }
+
+        h2 {
+            font-family: "Manrope", sans-serif;
+            font-size: 2rem;
+            letter-spacing: 0.25px;
+            margin: 0;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        h3 {
+            font-family: "Manrope", sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 0.2px;
+            margin: 32px 0 16px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        h3:first-of-type {
+            margin-top: 0;
+        }
+
+        h4 {
+            font-family: "Manrope", sans-serif;
+            font-size: 1.1rem;
+            margin: 20px 0 12px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 0.2px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        em {
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        ul, ol {
+            margin: 16px 0 16px 28px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        li {
+            margin-bottom: 10px;
+            line-height: 1.8;
+        }
+
+        ul li strong,
+        ol li strong {
+            color: var(--text);
+        }
+
+        pre {
+            background: linear-gradient(135deg, rgba(18, 38, 52, 0.95) 0%, rgba(12, 24, 34, 0.95) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.85rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            line-height: 1.6;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        code {
+            color: #a1e8ff;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        p code, li code {
+            background: rgba(44, 197, 166, 0.12);
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: var(--accent);
+            font-size: 0.88rem;
+            border: 0.5px solid rgba(44, 197, 166, 0.3);
+        }
+
+        .callout {
+            background: linear-gradient(135deg, rgba(44, 197, 166, 0.08) 0%, rgba(44, 197, 166, 0.04) 100%);
+            border-left: 4px solid var(--accent);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 24px 0;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .callout::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .callout:hover {
+            background: linear-gradient(135deg, rgba(44, 197, 166, 0.12) 0%, rgba(44, 197, 166, 0.08) 100%);
+            border-left-color: var(--accent-2);
+            transform: translateX(4px);
+        }
+
+        .callout:hover::before {
+            opacity: 1;
+        }
+
+        .callout strong {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--accent);
+            font-size: 0.98rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .callout p {
+            margin: 0 0 8px 0;
+        }
+
+        .callout p:last-child {
+            margin: 0;
+        }
+
+        .callout ul,
+        .callout ol {
+            margin: 8px 0 0 24px;
+        }
+
+        .callout li {
+            margin-bottom: 6px;
+        }
+
+        hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent) 20%, var(--accent) 80%, transparent);
+            margin: 60px 0;
+            opacity: 0.4;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        thead {
+            background: linear-gradient(90deg, rgba(44, 197, 166, 0.2) 0%, rgba(44, 197, 166, 0.1) 100%);
+            border-bottom: 2px solid var(--border);
+        }
+
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(44, 197, 166, 0.1);
+            color: var(--muted);
+        }
+
+        tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(44, 197, 166, 0.05);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(44, 197, 166, 0.2), rgba(240, 163, 74, 0.1));
+            color: var(--accent);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-right: 6px;
+            border: 0.5px solid rgba(44, 197, 166, 0.4);
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .badge:hover {
+            background: linear-gradient(135deg, rgba(44, 197, 166, 0.3), rgba(240, 163, 74, 0.15));
+            transform: scale(1.05);
+        }
+
+        .control-card {
+            background: linear-gradient(135deg, rgba(18, 38, 52, 0.7) 0%, rgba(15, 26, 34, 0.7) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            margin: 24px 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(44, 197, 166, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .control-card:hover {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(44, 197, 166, 0.08) 0%, rgba(15, 26, 34, 0.8) 100%);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(44, 197, 166, 0.12);
+        }
+
+        .control-card:hover::before {
+            left: 100%;
+        }
+
+        .control-card h4 {
+            margin-top: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .control-card p {
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .control-card ul,
+        .control-card ol {
+            position: relative;
+            z-index: 1;
+        }
+
+        .part-intro {
+            background: linear-gradient(135deg, rgba(44, 197, 166, 0.06) 0%, rgba(240, 163, 74, 0.04) 100%);
+            border: 1px solid rgba(44, 197, 166, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+            font-size: 1rem;
+            line-height: 1.9;
+        }
+
+        .part-intro strong {
+            color: var(--text);
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .comparison-item {
+            background: linear-gradient(135deg, rgba(18, 38, 52, 0.7) 0%, rgba(15, 26, 34, 0.7) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .comparison-item:hover {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(44, 197, 166, 0.08) 0%, rgba(15, 26, 34, 0.8) 100%);
+            transform: translateY(-3px);
+        }
+
+        .comparison-item h4 {
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+
+        .comparison-item p {
+            margin: 0 0 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .comparison-item ul {
+            margin: 8px 0 0 20px;
+        }
+
+        footer {
+            border-top: 2px solid rgba(44, 197, 166, 0.2);
+            padding: 48px 40px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, rgba(44, 197, 166, 0.15), rgba(44, 197, 166, 0.05));
+            border: 1.5px solid var(--accent);
+            color: var(--accent);
+            border-radius: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 40;
+            backdrop-filter: blur(8px);
+        }
+
+        .back-to-top:hover {
+            background: linear-gradient(135deg, rgba(44, 197, 166, 0.25), rgba(44, 197, 166, 0.1));
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(44, 197, 166, 0.2);
+        }
+
+        .back-to-top.show {
+            display: flex;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .hero {
+                padding: 48px 20px 36px;
+                margin-bottom: 34px;
+            }
+
+            .hero h1 {
+                font-size: clamp(1.95rem, 8vw, 2.35rem);
+            }
+
+            .hero .hero-subtitle {
+                font-size: 0.94rem;
+            }
+
+            h2 {
+                font-size: 1.6rem;
+            }
+
+            h3 {
+                font-size: 1.2rem;
+            }
+
+            .toc-container {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+
+            .toc-wrapper {
+                top: 8px;
+                margin-bottom: 40px;
+            }
+
+            .toc-wrapper.is-compact {
+                top: 6px;
+            }
+
+            .toc-item {
+                padding: 10px 14px;
+            }
+
+            .toc-wrapper.is-compact .toc-container {
+                padding: 10px;
+                gap: 7px;
+            }
+
+            .toc-wrapper.is-compact .toc-item {
+                padding: 7px 10px;
+                font-size: 0.8rem;
+            }
+
+            .back-button {
+                top: 12px;
+                right: 12px;
+                padding: 6px 10px;
+                font-size: 0.85rem;
+            }
+
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 44px;
+                height: 44px;
+            }
+
+            .control-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-layer"></div>
+    <button class="back-button" onclick="closeOrNavigate()">← Back to App</button>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="hero-content">
+                <p class="hero-eyebrow">LA Image Filter Studio</p>
+                <h1>Project Guide</h1>
+                <p class="hero-subtitle">Understanding the math behind the filter magic</p>
+            </div>
+        </div>
+
+        <!-- Table of Contents / Navigation -->
+        <div class="toc-wrapper">
+            <div class="toc-label">Navigate to section</div>
+            <div class="toc-container">
+                <a href="#part1" class="toc-item">Part 1: Basics</a>
+                <a href="#part2" class="toc-item">Part 2: Matrix X</a>
+                <a href="#part3" class="toc-item">Part 3: v' = T v</a>
+                <a href="#part4" class="toc-item">Part 4: Operations</a>
+                <a href="#part5" class="toc-item">Part 5: Backend Pipeline</a>
+                <a href="#part6" class="toc-item">Part 6: Controls (1-16)</a>
+                <a href="#part7" class="toc-item">Part 7: Main Formulas</a>
+                <a href="#part8" class="toc-item">Part 8: Term Table</a>
+                <a href="#part9" class="toc-item">Part 9: Effect vs Diagnostic</a>
+                <a href="#part10" class="toc-item">Part 10: Summary</a>
+                <a href="#part11" class="toc-item">Part 11: FAQ</a>
+            </div>
+        </div>
+
+        <hr/>
+
+        <!-- PART 1 -->
+        <section id="part1">
+            <div class="section-header">
+                <h2>PART 1: The Very Basics</h2>
+            </div>
+
+            <h3>What is this app actually doing?</h3>
+
+            <h4>Simple way to think about it:</h4>
+
+            <p>Imagine you have a <strong>photograph</strong>.</p>
+
+            <p>Your photo is made of millions of tiny dots called <strong>pixels</strong>.</p>
+
+            <p>Each pixel has three colors mixed together:</p>
+            <ul>
+                <li><strong>Red</strong> (how much red)</li>
+                <li><strong>Green</strong> (how much green)</li>
+                <li><strong>Blue</strong> (how much blue)</li>
+            </ul>
+
+            <p>This app takes these three colors in each pixel and <strong>changes them</strong> using math.</p>
+
+            <p><strong>That's it.</strong></p>
+
+            <p>The math part is like a recipe:</p>
+            <ul>
+                <li>Old Red + Old Green + Old Blue → New Red</li>
+                <li>Old Red + Old Green + Old Blue → New Green</li>
+                <li>Old Red + Old Green + Old Blue → New Blue</li>
+            </ul>
+
+            <p>The app shows you what changed, and also shows you the "recipe" (the math).</p>
+        </section>
+
+        <hr/>
+
+        <!-- PART 2 -->
+        <section id="part2">
+            <div class="section-header">
+                <h2>PART 2: Understanding X in R^(N×3)</h2>
+            </div>
+
+            <h3>The Image as a Big Table</h3>
+
+            <h4>What does R^(N×3) mean in super simple words?</h4>
+
+            <p>Let me break this down letter by letter:</p>
+
+            <p><strong>R</strong> = Real numbers (just regular numbers, like 1, 2, 3.5, etc.)</p>
+
+            <p><strong>N</strong> = How many pixels you have</p>
+
+            <p><strong>x</strong> = "by" or "times" (like 3 x 4 means 3 times 4)</p>
+
+            <p><strong>3</strong> = Always 3 (Red, Green, Blue)</p>
+
+            <p>So R^(N×3) means: "A table of real numbers with N rows and 3 columns."</p>
+
+            <h4>Visual way to understand:</h4>
+
+            <p>If your photo is 10 pixels wide and 10 pixels tall, you have 100 pixels total.</p>
+
+            <p>So N = 100.</p>
+
+            <p>Now make a table:</p>
+
+            <pre><code>Row 1 (Pixel 1):     [ R=255,  G=100,  B=50  ]
+Row 2 (Pixel 2):     [ R=200,  G=150,  B=75  ]
+Row 3 (Pixel 3):     [ R=180,  G=180,  B=100 ]
+...
+Row 100 (Pixel 100): [ R=50,   G=50,   B=50  ]</code></pre>
+
+            <p>This table is X in R^(100×3).</p>
+
+            <p>Each row = one pixel.<br/>
+            Each column = one color (Red, Green, or Blue).</p>
+
+            <h4>Why do we do this?</h4>
+
+            <p>Because with a table, we can use <strong>multiplication</strong> to change all pixels at once.</p>
+
+            <p>Instead of changing pixel 1, then pixel 2, then pixel 3... we can use one "recipe" and apply it to all 100 rows at once.</p>
+        </section>
+
+        <hr/>
+
+        <!-- PART 3 -->
+        <section id="part3">
+            <div class="section-header">
+                <h2>PART 3: Understanding v' = T v</h2>
+            </div>
+
+            <h3>The Magic Recipe</h3>
+
+            <h4>Simple analogy:</h4>
+
+            <p>Imagine a recipe for lemonade:</p>
+
+            <p><strong>Recipe (T):</strong></p>
+            <ul>
+                <li>Take 2 cups of lemon juice</li>
+                <li>Add 1 cup of sugar</li>
+                <li>Add 3 cups of water</li>
+            </ul>
+
+            <p><strong>Input (v):</strong></p>
+            <ul>
+                <li>1 cup of lemon juice = [1, 0, 0]</li>
+                <li>1 cup of sugar = [0, 1, 0]</li>
+                <li>1 cup of water = [0, 0, 1]</li>
+            </ul>
+
+            <p><strong>Output (v'):</strong></p>
+            <ul>
+                <li>Using the recipe on [1, 0, 0] gives [2, 1, 3]</li>
+            </ul>
+
+            <p>This is exactly what v' = T v means.</p>
+
+            <h4>In color terms:</h4>
+
+            <p><strong>Input pixel v:</strong></p>
+
+            <pre><code>v = [100 Red, 50 Green, 30 Blue]</code></pre>
+
+            <p><strong>Recipe matrix T (a 3×3 table of numbers):</strong></p>
+
+            <pre><code>T = [
+  [0.5,  0.2,  0.1],
+  [0.3,  0.6,  0.2],
+  [0.2,  0.2,  0.7]
+]</code></pre>
+
+            <p><strong>New pixel v':</strong></p>
+
+            <p>To get new Red:</p>
+            <ul>
+                <li>Take old Red (100) and multiply by first number (0.5) → 50</li>
+                <li>Take old Green (50) and multiply by second number (0.2) → 10</li>
+                <li>Take old Blue (30) and multiply by third number (0.1) → 3</li>
+                <li>Add them: 50 + 10 + 3 = 63 → <strong>New Red = 63</strong></li>
+            </ul>
+
+            <p>Repeat for Green and Blue.</p>
+
+            <p><strong>Result: v' = [63, 60, 44]</strong></p>
+
+            <p>The pixel changed!</p>
+
+            <h4>Why have a matrix (recipe)?</h4>
+
+            <p>Because this one T can be used on all 100 pixels (or 1 million pixels) at once.</p>
+
+            <p>That's the power of linear algebra.</p>
+        </section>
+
+        <hr/>
+
+        <!-- PART 4 -->
+        <section id="part4">
+            <div class="section-header">
+                <h2>PART 4: Optional Operations After Transform</h2>
+            </div>
+
+            <h3>Stages After the Recipe</h3>
+
+            <h4>Timeline of what happens to your pixel:</h4>
+
+            <div class="callout">
+                <strong>Stage 1: Apply T Transform</strong>
+                <ul>
+                    <li>Input: [100R, 50G, 30B]</li>
+                    <li>Output: [63R, 60G, 44B]</li>
+                </ul>
+            </div>
+
+            <div class="callout">
+                <strong>Stage 2: Optional Grayscale Projection</strong>
+                <ul>
+                    <li>If you checked the "Grayscale Projection" checkbox</li>
+                    <li>Input: [63R, 60G, 44B]</li>
+                    <li>Output: [50R, 50G, 50B] (all equal, so it looks gray)</li>
+                </ul>
+            </div>
+
+            <div class="callout">
+                <strong>Stage 3: Tone Controls (Exposure, Contrast, etc.)</strong>
+                <ul>
+                    <li>Input: [50R, 50G, 50B]</li>
+                    <li>Apply exposure, contrast, saturation formulas</li>
+                    <li>Output: [52R, 48G, 49B]</li>
+                </ul>
+            </div>
+
+            <div class="callout">
+                <strong>Stage 4: Vibrance</strong>
+                <ul>
+                    <li>Makes dull colors more colorful</li>
+                    <li>Input: [52R, 48G, 49B]</li>
+                    <li>Output: [55R, 45G, 47B]</li>
+                </ul>
+            </div>
+
+            <div class="callout">
+                <strong>Stage 5: Sharpen</strong>
+                <ul>
+                    <li>Makes edges more clear</li>
+                    <li>Compares pixel to neighbors</li>
+                    <li>Increases difference</li>
+                </ul>
+            </div>
+
+            <div class="callout">
+                <strong>Stage 6: Vignette</strong>
+                <ul>
+                    <li>Darkens edges of photo</li>
+                    <li>Only applies to pixels near edges</li>
+                </ul>
+            </div>
+
+            <div class="callout">
+                <strong>Stage 7: Optional Least Squares Correction</strong>
+                <ul>
+                    <li>If you checked "Least Squares Correction"</li>
+                    <li>Applies an extra correction</li>
+                </ul>
+            </div>
+
+            <div class="callout">
+                <strong>Stage 8: Optional PCA Reduction</strong>
+                <ul>
+                    <li>If PCA Components is not 3</li>
+                    <li>Simplifies the colors</li>
+                </ul>
+            </div>
+
+            <h4>Key point:</h4>
+
+            <p>Each stage is like a different filter applied on top of the previous one.</p>
+
+            <p>Like applying Instagram filters one after another.</p>
+        </section>
+
+        <hr/>
+
+        <!-- PART 5 -->
+        <section id="part5">
+            <div class="section-header">
+                <h2>PART 5: Full Backend Pipeline Order</h2>
+            </div>
+
+            <h3>Step by Step Processing</h3>
+
+            <p>When you upload a photo, this happens in this order:</p>
+
+            <div class="control-card">
+                <h4>Step 1: Load and Resize</h4>
+                <ul>
+                    <li>Read the image file from your computer</li>
+                    <li>If it's too big, make it smaller (for preview speed)</li>
+                    <li>Example: 4000 × 3000 → downscale to 1280 × 960</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 2: Convert to Table (X)</h4>
+                <ul>
+                    <li>Take the image and flatten it into table format</li>
+                    <li>Each pixel becomes one row</li>
+                    <li>If image is 1280 × 960, you have 1,228,800 rows</li>
+                    <li>Each row has 3 columns (R, G, B)</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 3: Build the Transform Recipe (T)</h4>
+                <p>This is the most important step.</p>
+
+                <h4>Step 3a: Get Preset Matrix T_p</h4>
+                <ul>
+                    <li>You chose a preset like "Cinematic" or "Sepia"</li>
+                    <li>This preset is a pre-made 3×3 matrix</li>
+                </ul>
+
+                <p>Example Sepia preset:</p>
+
+                <pre><code>T_p = [
+  [0.393, 0.769, 0.189],
+  [0.349, 0.686, 0.168],
+  [0.272, 0.534, 0.131]
+]</code></pre>
+
+                <h4>Step 3b: Build Hue Rotation R_theta</h4>
+                <ul>
+                    <li>You moved the Hue slider to 30 degrees</li>
+                    <li>This creates a rotation in color space</li>
+                    <li>Think of rotating colors on a color wheel</li>
+                    <li>Creates new matrix R_theta</li>
+                </ul>
+
+                <h4>Step 3c: Blend with Identity</h4>
+                <ul>
+                    <li>You moved Filter Strength to 0.5</li>
+                    <li>Formula: T = (1 - 0.5) × I + 0.5 × (R_theta × T_p)</li>
+                    <li>Meaning: T = 0.5 × I + 0.5 × (rotated preset)</li>
+                    <li>Half identity, half rotated preset</li>
+                    <li>Result: T (final recipe matrix)</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 4: Apply Transform to Every Pixel</h4>
+                <ul>
+                    <li>Take recipe T</li>
+                    <li>For each of 1.2 million pixels:</li>
+                    <li>Multiply pixel by T</li>
+                    <li>Store result</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Steps 5-11: Post-Processing Stages</h4>
+                <ul>
+                    <li>Step 5: Grayscale projection (if enabled)</li>
+                    <li>Step 6: Tone controls (exposure, contrast, saturation, temperature, tint, gamma)</li>
+                    <li>Step 7: Vibrance enhancement</li>
+                    <li>Step 8: Sharpen edges</li>
+                    <li>Step 9: Vignette darkening</li>
+                    <li>Step 10: Least squares correction (if enabled)</li>
+                    <li>Step 11: PCA reduction (if components &lt; 3)</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 5: Check Grayscale</h4>
+                <ul>
+                    <li>If you checked Grayscale Projection:</li>
+                    <li>For each pixel, project it to grayscale line</li>
+                    <li>All pixels become [G, G, G] where G is luminance</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 6: Apply Tone Controls</h4>
+                <ul>
+                    <li>If you moved Exposure slider to 0.5: brighten by multiplying each value by 2^0.5</li>
+                    <li>If you moved Contrast slider: expand values away from 0.5</li>
+                    <li>If you moved Saturation slider: move toward or away from gray</li>
+                    <li>Repeat for Temperature, Tint, and Gamma</li>
+                    <li>Each one modifies the pixel values</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 7: Apply Vibrance</h4>
+                <ul>
+                    <li>Look at each pixel</li>
+                    <li>Calculate how saturated it is</li>
+                    <li>If not very saturated, boost it more</li>
+                    <li>If already saturated, boost it less</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 8: Apply Sharpen</h4>
+                <ul>
+                    <li>Look at each pixel and its neighbors</li>
+                    <li>If it's very different from neighbors, make it more different</li>
+                    <li>Creates edge enhancement</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 9: Apply Vignette</h4>
+                <ul>
+                    <li>Calculate distance from pixel to center of image</li>
+                    <li>If pixel is near edge, darken it</li>
+                    <li>If pixel is near center, do not change it</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 10: Check Least Squares</h4>
+                <ul>
+                    <li>If Least Squares Correction is checked:</li>
+                    <li>Apply extra correction matrix X_hat</li>
+                    <li>This tries to make the image colors more balanced</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 11: Check PCA</h4>
+                <ul>
+                    <li>If PCA Components is less than 3:</li>
+                    <li>Reduce to lower-dimensional color space</li>
+                    <li>If k=2: forget one weak color direction</li>
+                    <li>If k=1: force everything onto dominant direction</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 12: Convert Back to Image</h4>
+                <ul>
+                    <li>Take the table (now modified)</li>
+                    <li>Convert back to pixel format</li>
+                    <li>Create actual image file</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 13: Compute Dashboard Metrics</h4>
+                <ul>
+                    <li>Calculate Rank, Nullity, Determinant, etc.</li>
+                    <li>These describe the T matrix</li>
+                    <li>Show metrics to user</li>
+                </ul>
+            </div>
+
+            <div class="control-card">
+                <h4>Step 14: Return Results</h4>
+                <ul>
+                    <li>Send edited image to browser</li>
+                    <li>Send all metrics</li>
+                    <li>Browser displays everything</li>
+                </ul>
+            </div>
+        </section>
+
+        <hr/>
+
+        <!-- PART 6 -->
+        <section id="part6">
+            <div class="section-header">
+                <h2>PART 6: Controls Explained in Depth</h2>
+            </div>
+
+            <h3>The 16 Essential Controls</h3>
+
+            <!-- Control 6.1 -->
+            <div class="control-card">
+                <h4>6.1: PRESET FILTER</h4>
+                <p>A pre-made color recipe that defines the base matrix T_p.</p>
+
+                <h4>Available presets:</h4>
+                <p><strong>1. Identity:</strong></p>
+                <pre><code>[ [1, 0, 0],
+  [0, 1, 0],
+  [0, 0, 1] ]</code></pre>
+                <p>Don't change anything. Red stays red, green stays green, blue stays blue.</p>
+
+                <p><strong>2. Sepia:</strong></p>
+                <pre><code>[ [0.393, 0.769, 0.189],
+  [0.349, 0.686, 0.168],
+  [0.272, 0.534, 0.131] ]</code></pre>
+
+                <p>Let's trace one pixel with Sepia: Input [100R, 50G, 30B]</p>
+                <ul>
+                    <li>New Red = 0.393×100 + 0.769×50 + 0.189×30 = 83.42</li>
+                    <li>New Green = 0.349×100 + 0.686×50 + 0.168×30 = 74.24</li>
+                    <li>New Blue = 0.272×100 + 0.534×50 + 0.131×30 = 57.83</li>
+                    <li>Output: [83R, 74G, 58B] — Brownish tone = Sepia look!</li>
+                </ul>
+
+                <p><strong>Other presets:</strong> Cinematic, Vintage, Teal and Gold, Noir, Cool, Warm, No Red</p>
+
+                <p><span class="badge">HUGE</span> Effect on image: Main color transformation.</p>
+            </div>
+
+            <!-- Control 6.2 -->
+            <div class="control-card">
+                <h4>6.2: FILTER STRENGTH (0 to 1)</h4>
+                <p>How much of the preset to use. Blends between no change and full preset.</p>
+
+                <h4>Formula:</h4>
+                <p>T = (1 - s) × I + s × (Rotated Preset)</p>
+
+                <p><strong>s = 0:</strong> No color change. <strong>s = 0.5:</strong> Half effect. <strong>s = 1:</strong> Full effect.</p>
+
+                <p><span class="badge">STRONG</span> Controls how visible the preset is.</p>
+            </div>
+
+            <!-- Control 6.3 -->
+            <div class="control-card">
+                <h4>6.3: HUE ROTATION (-180 to 180°)</h4>
+                <p>Rotates colors on a color wheel. Rotates ONLY color info, NOT brightness.</p>
+
+                <h4>Examples:</h4>
+                <p><strong>+90°:</strong> Red→Blue, Blue→Cyan, Green→Purple</p>
+                <p><strong>180°:</strong> Red→Cyan, Green→Magenta, Blue→Yellow</p>
+
+                <p><span class="badge">STRONG</span> All colors shift on the wheel.</p>
+            </div>
+
+            <!-- Control 6.4 -->
+            <div class="control-card">
+                <h4>6.4: EXPOSURE (-1.5 to 1.5)</h4>
+                <p>Make image brighter or darker using exponential scaling.</p>
+
+                <h4>Formula:</h4>
+                <p>new_pixel = old_pixel × 2^e</p>
+
+                <p><strong>e = 1:</strong> Everything doubles. <strong>e = -1:</strong> Everything halves.</p>
+
+                <p><span class="badge">STRONG</span> Uniform brightness adjustment.</p>
+            </div>
+
+            <!-- Control 6.5 -->
+            <div class="control-card">
+                <h4>6.5: CONTRAST (-1 to 1)</h4>
+                <p>Make differences between light and dark areas bigger or smaller.</p>
+
+                <h4>Formula:</h4>
+                <p>new = clip((old - 0.5) × (1 + c) + 0.5)</p>
+
+                <p>Lights get lighter, darks get darker (for positive contrast).</p>
+
+                <p><span class="badge">STRONG</span> Changes punch and drama of image.</p>
+            </div>
+
+            <!-- Control 6.6 -->
+            <div class="control-card">
+                <h4>6.6: SATURATION (-1 to 1)</h4>
+                <p>How vibrant the colors are.</p>
+
+                <h4>Formula:</h4>
+                <ul>
+                    <li>Find luminance: g = 0.299×R + 0.587×G + 0.114×B</li>
+                    <li>new = clip(g + (old - g) × (1 + s))</li>
+                </ul>
+
+                <p>Positive values make colors more vibrant. Negative makes them grayish.</p>
+
+                <p><span class="badge">STRONG</span> Makes colors vivid or muted.</p>
+            </div>
+
+            <!-- Control 6.7 -->
+            <div class="control-card">
+                <h4>6.7: VIBRANCE (-1 to 1)</h4>
+                <p>Like saturation, but SMART. Boosts dull colors more than vibrant ones.</p>
+
+                <p>Dull parts get more vibrant. Already-vibrant parts stay vibrant. Natural looking.</p>
+
+                <p><span class="badge">MODERATE</span> Smarter than saturation.</p>
+            </div>
+
+            <!-- Control 6.8 -->
+            <div class="control-card">
+                <h4>6.8: TEMPERATURE (-1 to 1)</h4>
+                <p>Make image warmer (red/orange) or cooler (blue).</p>
+
+                <h4>Formula:</h4>
+                <p>R_new = clip(R + 0.08 × tau); B_new = clip(B - 0.08 × tau)</p>
+
+                <p><strong>Positive:</strong> Warmer (sunset). <strong>Negative:</strong> Cooler (ice).</p>
+
+                <p><span class="badge">MODERATE</span> Changes color temperature feeling.</p>
+            </div>
+
+            <!-- Control 6.9 -->
+            <div class="control-card">
+                <h4>6.9: TINT (-1 to 1)</h4>
+                <p>Shift between green and magenta.</p>
+
+                <h4>Formula:</h4>
+                <p>G_new = clip(G + 0.06 × eta)</p>
+
+                <p><strong>Positive:</strong> Greenish. <strong>Negative:</strong> Magenta.</p>
+
+                <p><span class="badge">WEAK</span> Subtle color shift.</p>
+            </div>
+
+            <!-- Control 6.10 -->
+            <div class="control-card">
+                <h4>6.10: GAMMA (0.3 to 2.2)</h4>
+                <p>Power-law remapping. Changes how dark/light values are distributed.</p>
+
+                <h4>Formula:</h4>
+                <p>new = old ^ (1/gamma)</p>
+
+                <p><strong>gamma = 2:</strong> Dark areas get brighter. <strong>gamma = 0.5:</strong> Dark areas get darker.</p>
+
+                <p><span class="badge">STRONG</span> Changes tonal distribution dramatically.</p>
+            </div>
+
+            <!-- Control 6.11 -->
+            <div class="control-card">
+                <h4>6.11: SHARPEN (0 to 2)</h4>
+                <p>Unsharp mask. Makes edges crisp by enhancing differences.</p>
+
+                <h4>Formula:</h4>
+                <p>new = clip(old + alpha × (old - blur))</p>
+
+                <p>At edges: light becomes lighter, dark becomes darker = sharper.</p>
+
+                <p><span class="badge">MODERATE</span> Makes edges crisper, details pop.</p>
+            </div>
+
+            <!-- Control 6.12 -->
+            <div class="control-card">
+                <h4>6.12: VIGNETTE (0 to 1)</h4>
+                <p>Darken edges of photo. Like old camera or spotlight effect.</p>
+
+                <p>Center stays bright. Edges gradually darken. Creates dramatic framing.</p>
+
+                <p><span class="badge">MODERATE</span> Adds dramatic edges.</p>
+            </div>
+
+            <!-- Control 6.13 -->
+            <div class="control-card">
+                <h4>6.13: PCA COMPONENTS (1 to 3)</h4>
+                <p><strong>The only control using actual Principal Component Analysis.</strong></p>
+
+                <h4>The Sheep Flock Analogy:</h4>
+                <p>Each sheep has height, weight, wool thickness. They follow patterns: tall sheep tend to be heavy. So you only need two numbers: "Size" and "Wool". You've compressed 3 measurements to 2.</p>
+
+                <h4>In color terms:</h4>
+                <p>Each pixel has 3 colors: R, G, B. But they're not independent! PCA finds patterns and removes weak color information.</p>
+
+                <h4>Algorithm:</h4>
+                <ol>
+                    <li>Normalize to 0-1</li>
+                    <li>Calculate mean pixel</li>
+                    <li>Center by subtracting mean</li>
+                    <li>Calculate covariance matrix</li>
+                    <li>Find eigenvectors (directions of most variation)</li>
+                    <li>Choose k components (keep top k)</li>
+                    <li>Reconstruct and project back</li>
+                </ol>
+
+                <h4>Effects:</h4>
+                <p><strong>k=3:</strong> No change. Full color. <strong>k=2:</strong> Moderate loss, muted. <strong>k=1:</strong> Extreme, almost grayscale, artistic.</p>
+
+                <p><span class="badge">VARIABLE</span> Depends on k value.</p>
+            </div>
+
+            <!-- Control 6.14 -->
+            <div class="control-card">
+                <h4>6.14: PREVIEW SIZE (600 to max)</h4>
+                <p>How big a preview to compute.</p>
+
+                <h4>Why:</h4>
+                <p>4000×3000 is slow. 1280×960 is fast. Control the computation speed.</p>
+
+                <h4>Important:</h4>
+                <p>Downloaded image ALWAYS uses original resolution. This only affects preview speed.</p>
+            </div>
+
+            <div class="control-card">
+                <h4>6.15: GRAYSCALE PROJECTION</h4>
+                <p><strong>What it is:</strong> A geometric projection in 3D color space.</p>
+                <p><strong>Important:</strong> This is a linear algebra concept.</p>
+
+                <h4>Core idea</h4>
+                <p>RGB is a 3D space, and luminance gives a special direction:</p>
+                <pre><code>u = [0.299, 0.587, 0.114]</code></pre>
+                <p>When grayscale projection is enabled, each pixel is projected to the luminance line.</p>
+
+                <h4>Formula</h4>
+                <pre><code>proj_u(v) = ((v · u) / (u · u)) × u</code></pre>
+
+                <h4>Simple luminance form used in practice</h4>
+                <pre><code>L = 0.299R + 0.587G + 0.114B
+pixel_out = [L, L, L]</code></pre>
+
+                <h4>Worked example</h4>
+                <p>For v = [100, 50, 30], luminance is:</p>
+                <pre><code>L = 0.299×100 + 0.587×50 + 0.114×30 = 62.67
+pixel_out = [62.67, 62.67, 62.67]</code></pre>
+
+                <p><span class="badge">STRONG</span> Makes image grayscale while preserving perceived brightness.</p>
+            </div>
+
+            <div class="control-card">
+                <h4>6.16: LEAST SQUARES CORRECTION</h4>
+                <p><strong>What it is:</strong> A global optimization to balance image colors.</p>
+                <p><strong>Important:</strong> This is an optimization problem.</p>
+
+                <h4>Optimization objective</h4>
+                <pre><code>min ||AX - B||_F^2</code></pre>
+
+                <h4>Closed-form solution</h4>
+                <pre><code>X_hat = (A^T A)^(-1) A^T B</code></pre>
+
+                <h4>How it is applied</h4>
+                <pre><code>x_corrected = x × X_hat</code></pre>
+
+                <h4>Constraint intuition</h4>
+                <ul>
+                    <li>Keep red, green, and blue channels reasonably aligned with identity</li>
+                    <li>Push global average color toward neutral gray</li>
+                    <li>Find best compromise when exact constraints cannot all be satisfied</li>
+                </ul>
+
+                <p><span class="badge">MODERATE</span> Produces subtle to moderate global color balancing.</p>
+            </div>
+        </section>
+
+        <hr/>
+
+        <!-- PART 7 -->
+        <section id="part7">
+            <div class="section-header">
+                <h2>PART 7: Main Formulas</h2>
+            </div>
+
+            <p>These are the live formulas shown at top of dashboard.</p>
+
+            <div class="control-card">
+                <h4>Transformation tile</h4>
+                <pre><code>T = (1-s)I + s R_theta T_p</code></pre>
+                <p>This is the current blend formula.</p>
+                <ul>
+                    <li>s = strength slider value</li>
+                    <li>R_theta = hue rotation matrix (theta in degrees)</li>
+                    <li>T_p = preset matrix</li>
+                    <li>I = identity matrix</li>
+                </ul>
+                <p>Below this tile: rank(T) and det(T).</p>
+            </div>
+
+            <div class="control-card">
+                <h4>Projection tile</h4>
+                <p><strong>If grayscale ON:</strong></p>
+                <pre><code>proj_u(v) = ((v·u)/(u·u))u</code></pre>
+                <p><strong>If grayscale OFF:</strong></p>
+                <pre><code>v_out = v'</code></pre>
+            </div>
+
+            <div class="control-card">
+                <h4>Least Squares tile</h4>
+                <pre><code>X_hat = arg min_X ||AX - B||_F^2</code></pre>
+                <p>If LS correction is OFF: "X_hat computed only" (calculated but not used).</p>
+                <p>If LS correction is ON: "X_out = X × X_hat" (applied to pixels).</p>
+            </div>
+
+            <div class="control-card">
+                <h4>Covariance tile</h4>
+                <pre><code>C = (1/(N-1)) X_c^T X_c</code></pre>
+                <p>Where X_c = centered pixels (X - mean).</p>
+                <p>Below this tile: lambda_1 and rho_1 (PC1 variance %).</p>
+            </div>
+        </section>
+
+        <hr/>
+
+        <!-- PART 8 -->
+        <section id="part8">
+            <div class="section-header">
+                <h2>PART 8: The Term Table</h2>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Term</th>
+                        <th>Meaning</th>
+                        <th>How Computed</th>
+                        <th>Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>Transformation</strong></td><td>Full color recipe (3x3 matrix)</td><td>T = (1-s)I + s(R_theta T_p)</td><td>Directly changes all pixel colors</td></tr>
+                    <tr><td><strong>Projection</strong></td><td>Maps 3D RGB to 1D luminance line</td><td>proj_u(v) = ((v·u)/(u·u))u</td><td>Removes color, keeps brightness</td></tr>
+                    <tr><td><strong>Least Squares</strong></td><td>Best-fit color balance matrix</td><td>Solves min ||AX - B||_F^2</td><td>Balances global color tone</td></tr>
+                    <tr><td><strong>Covariance</strong></td><td>Measure of color variation together</td><td>C = (1/(N-1))(X-mu)^T(X-mu)</td><td>Diagnostic only</td></tr>
+                    <tr><td><strong>Rank</strong></td><td>Number of independent dimensions</td><td>Linear algebra rank computation</td><td>Shows if colors are compressed</td></tr>
+                    <tr><td><strong>Nullity</strong></td><td>Missing dimensions (3 - rank)</td><td>3 - rank</td><td>Shows color information loss</td></tr>
+                    <tr><td><strong>cond(T)</strong></td><td>Transform sensitivity</td><td>Largest singular value / smallest singular value</td><td>Shows numerical stability</td></tr>
+                    <tr><td><strong>Invertible</strong></td><td>Can T be reversed</td><td>Check if |det(T)| &gt; 10^-8</td><td>Shows reversibility</td></tr>
+                    <tr><td><strong>trace(T)</strong></td><td>Sum of diagonal entries</td><td>T[0,0] + T[1,1] + T[2,2]</td><td>Diagnostic</td></tr>
+                    <tr><td><strong>||T||_F</strong></td><td>Total magnitude of T</td><td>sqrt(sum of all T_ij^2)</td><td>Shows transform strength</td></tr>
+                    <tr><td><strong>PC1 Variance</strong></td><td>Variance in first PC</td><td>lambda_1 / (lambda_1 + lambda_2 + lambda_3) × 100%</td><td>Shows if one color dominates</td></tr>
+                    <tr><td><strong>Dynamic Range</strong></td><td>Brightness spread of output</td><td>max(pixel) - min(pixel)</td><td>Shows output contrast</td></tr>
+                    <tr><td><strong>Transformation Matrix</strong></td><td>Numeric 3x3 T</td><td>From preset + hue + strength</td><td>Used to transform every pixel</td></tr>
+                    <tr><td><strong>RREF</strong></td><td>Row-reduced form of T</td><td>Gaussian elimination</td><td>Diagnostic</td></tr>
+                    <tr><td><strong>Covariance Matrix</strong></td><td>3x3 color variation matrix</td><td>From centered pixels</td><td>Diagnostic</td></tr>
+                    <tr><td><strong>LS Approximation Matrix</strong></td><td>Best-fit correction</td><td>Least squares solve</td><td>Applied if LS enabled</td></tr>
+                    <tr><td><strong>Eigen Spectrum</strong></td><td>Principal color directions</td><td>Eigenvectors of covariance</td><td>Diagnostic</td></tr>
+                    <tr><td><strong>Explained Variance</strong></td><td>Variance per component</td><td>lambda_i / sum(lambda)</td><td>Shows which colors matter most</td></tr>
+                    <tr><td><strong>Dominant Eigenvector</strong></td><td>Main variation direction</td><td>First eigenvector</td><td>Diagnostic</td></tr>
+                    <tr><td><strong>Color Statistics</strong></td><td>Color summary</td><td>Mean/std on normalized pixels</td><td>Diagnostic</td></tr>
+                    <tr><td><strong>Mean RGB</strong></td><td>Average color</td><td>Mean per channel</td><td>Diagnostic</td></tr>
+                    <tr><td><strong>Std RGB</strong></td><td>Color spread</td><td>Standard deviation per channel</td><td>Diagnostic</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <hr/>
+
+        <!-- PART 9 -->
+        <section id="part9">
+            <div class="section-header">
+                <h2>PART 9: What Changes the Image vs. What Is Diagnostic</h2>
+            </div>
+
+            <div class="comparison">
+                <div class="comparison-item">
+                    <h4>Changes the image</h4>
+                    <ol>
+                        <li>Preset Filter</li>
+                        <li>Filter Strength</li>
+                        <li>Hue Rotation</li>
+                        <li>Exposure</li>
+                        <li>Contrast</li>
+                        <li>Saturation</li>
+                        <li>Vibrance</li>
+                        <li>Temperature</li>
+                        <li>Tint</li>
+                        <li>Gamma</li>
+                        <li>Sharpen</li>
+                        <li>Vignette</li>
+                        <li>PCA Components</li>
+                        <li>Grayscale Projection (if enabled)</li>
+                        <li>Least Squares Correction (if enabled)</li>
+                    </ol>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>Diagnostic only</h4>
+                    <ol>
+                        <li>Rank, Nullity, det, cond, Invertible</li>
+                        <li>trace, ||T||_F</li>
+                        <li>Dynamic Range</li>
+                        <li>Transformation Matrix (shown for reference)</li>
+                        <li>RREF</li>
+                        <li>Covariance Matrix</li>
+                        <li>Eigen Spectrum</li>
+                        <li>Explained Variance</li>
+                        <li>Dominant Eigenvector</li>
+                        <li>Mean RGB, Std RGB</li>
+                        <li>PC1 Variance (reports result only)</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <hr/>
+
+        <!-- PART 10 -->
+        <section id="part10">
+            <div class="section-header">
+                <h2>PART 10: Summary</h2>
+            </div>
+
+            <div class="callout">
+                <strong>This app is a visual linear algebra demonstration</strong>
+                <p><strong>Step 1:</strong> Represent image as matrix X with N rows and 3 color columns.</p>
+                <p><strong>Step 2:</strong> Apply 3x3 transform matrix T to every pixel.</p>
+                <p><strong>Step 3:</strong> Optionally project pixels to luminance line for grayscale.</p>
+                <p><strong>Step 4:</strong> Apply tone controls (exposure, contrast, saturation, etc.).</p>
+                <p><strong>Step 5:</strong> Improve visual quality with vibrance, sharpen, and vignette.</p>
+                <p><strong>Step 6:</strong> Optionally balance global color using least squares correction.</p>
+                <p><strong>Step 7:</strong> Optionally reduce color dimensions via PCA.</p>
+                <p><strong>Step 8:</strong> Report matrix diagnostics and statistics in dashboard tiles.</p>
+            </div>
+        </section>
+
+        <hr/>
+
+        <!-- PART 11 -->
+        <section id="part11">
+            <div class="section-header">
+                <h2>PART 11: FAQ and Quick Clarifications</h2>
+            </div>
+
+            <div class="control-card">
+                <h4>Q: What does "matrix" mean in simple terms?</h4>
+                <p>A: A table of numbers arranged in rows and columns.</p>
+
+                <h4>Q: What does "eigenvalue" mean?</h4>
+                <p>A: A number that describes how much variation exists in a specific direction.</p>
+
+                <h4>Q: What does "covariance" mean?</h4>
+                <p>A: How much two quantities vary together.</p>
+
+                <h4>Q: What does "normalize" mean?</h4>
+                <p>A: Scale values to a standard range, usually 0-1 or 0-255.</p>
+
+                <h4>Q: What does "clip" mean?</h4>
+                <p>A: Clamp values to a range.</p>
+
+                <h4>Q: Why 0.299, 0.587, 0.114 for luminance?</h4>
+                <p>A: Human vision is most sensitive to green, then red, then blue.</p>
+
+                <h4>Q: Why use matrix multiplication?</h4>
+                <p>A: It applies one transform to all pixels and captures channel mixing.</p>
+
+                <h4>Q: Saturation vs Vibrance?</h4>
+                <p>A: Saturation affects all colors equally; vibrance boosts dull colors more.</p>
+
+                <h4>Q: What is Frobenius norm?</h4>
+                <p>A: The square root of sum of squares of matrix elements.</p>
+
+                <h4>Q: Why is Least Squares useful?</h4>
+                <p>A: It finds the best compromise when all constraints cannot be perfectly satisfied.</p>
+
+                <h4>Q: What happens if PCA = 1?</h4>
+                <p>A: Color collapses to one dominant direction; image becomes heavily compressed.</p>
+            </div>
+
+            <div class="callout">
+                <strong>Done</strong>
+                <p>You now understand every single concept from first principles!</p>
+            </div>
+        </section>
+    </div>
+
+    <button class="back-to-top" id="backToTop">↑</button>
+
+    <script>
+        const backToTopBtn = document.getElementById('backToTop');
+        const tocWrapper = document.querySelector('.toc-wrapper');
+        const hero = document.querySelector('.hero');
+        const tocItems = Array.from(document.querySelectorAll('.toc-item'));
+        const sections = Array.from(document.querySelectorAll('section[id^="part"]'));
+
+        const setActiveToc = (id) => {
+            tocItems.forEach((item) => {
+                item.classList.toggle('active', item.getAttribute('href') === `#${id}`);
+            });
+        };
+
+        const updateBackToTop = () => {
+            backToTopBtn.classList.toggle('show', window.scrollY > 300);
+        };
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                // Try to find intersecting sections first
+                const visible = entries
+                    .filter((entry) => entry.isIntersecting)
+                    .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+                if (visible.length > 0) {
+                    setActiveToc(visible[0].target.id);
+                } else {
+                    // Fallback for fast scrolling: find section closest to viewport top
+                    const closest = entries
+                        .map(entry => ({
+                            id: entry.target.id,
+                            distance: Math.abs(entry.boundingClientRect.top)
+                        }))
+                        .sort((a, b) => a.distance - b.distance)[0];
+                    
+                    if (closest) {
+                        setActiveToc(closest.id);
+                    }
+                }
+            },
+            {
+                root: null,
+                threshold: [0, 0.1, 0.25, 0.5],
+                rootMargin: '0px 0px -60% 0px'
+            }
+        );
+
+        sections.forEach((section) => observer.observe(section));
+
+        window.addEventListener('scroll', updateBackToTop, { passive: true });
+        updateBackToTop();
+        setActiveToc('part1');
+
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        tocItems.forEach((item) => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(item.getAttribute('href'));
+                if (!target) {
+                    return;
+                }
+                window.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
+                setActiveToc(target.id);
+            });
+        });
+
+        const closeOrNavigate = () => {
+            if (window.opener && window.opener !== null) {
+                window.close();
+            } else {
+                window.history.back();
+            }
+        };
+    </script>
+</body>
+</html>

@@ -14,7 +14,9 @@ from src.image_pipeline import run_pipeline
 
 app = FastAPI(title="LA Image Filter Studio", version="1.1.0")
 frontend_dir = Path(__file__).parent / "frontend"
+docs_dir = Path(__file__).parent / "docs"
 app.mount("/frontend", StaticFiles(directory=str(frontend_dir)), name="frontend")
+app.mount("/docs", StaticFiles(directory=str(docs_dir)), name="docs")
 
 
 def _build_settings(

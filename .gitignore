@@ -1,4 +1,4 @@
-docs/
+temp/
 __pycache__/
 *.pyc
 .venv/

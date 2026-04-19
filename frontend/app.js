@@ -526,6 +526,9 @@ viewButtons.split.addEventListener("click", () => setViewMode("split"));
 viewButtons.original.addEventListener("click", () => setViewMode("original"));
 viewButtons.edited.addEventListener("click", () => setViewMode("edited"));
 toggleCaptionsBtn.addEventListener("click", toggleCaptions);
+document.getElementById("projectGuideBtn").addEventListener("click", () => {
+  window.open("/docs/project-guide.html", "_blank");
+});
 
 // Wait for KaTeX to load before initializing
 function initializeApp() {
